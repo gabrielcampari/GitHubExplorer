@@ -1,44 +1,56 @@
-import React from "react";
-import { Title, Form, Repositories } from './styles'
-import { FiChevronRight } from 'react-icons/fi'
-import Logo from '../../assets/logo.svg'
+import React, { useState, FormEvent } from "react";
+import { Title, Form, Repositories } from './styles';
+import { FiChevronRight } from 'react-icons/fi';
+import Logo from '../../assets/logo.svg';
+import api from '../../services/api'
+import Repository from "../Repository";
+
+interface Repository {
+  full_name: string;
+  description: string;
+  owner: {
+    login: string;
+    avatar_url: string;
+  };
+}
 
 const Dashboard: React.FC = () => {
+  const [newRepo, setNewRepo] = useState('');
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+
+  async function handleAddRepository(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
+    event.preventDefault();
+
+    const response = await api.get(`repos/${newRepo}`);
+    const repository = response.data;
+
+    setRepositories([...repositories, repository]);
+    setNewRepo('');
+  }
+
   return (
     <>
     <img src={Logo} alt="Github Explorer" />
     <Title>Explore repositórios no Github</Title>
 
-    <Form>
-      <input placeholder="Digite o nome do repositório"/>
+    <Form onSubmit={handleAddRepository}>
+      <input value={newRepo} onChange={(e):void => setNewRepo(e.target.value)} placeholder="Digite o nome do repositório"/>
       <button type="submit">Pesquisar</button>
     </Form>
 
     <Repositories>
-    <a href="Perfil">
-      <img src="https://avatars.githubusercontent.com/u/126830284?v=4" alt="Gabriel Campari"/>
-      <div>
-        <strong>gabrielcampari/GoBarber</strong>
-        <p>Barber app, with appointments, made in Typescript.</p>
-      </div>
-      <FiChevronRight size={20} />
-    </a>
-    <a href="Perfil">
-      <img src="https://avatars.githubusercontent.com/u/127698444?v=4" alt="Gabriel Ambrosio"/>
-      <div>
-        <strong>gabigogunner/PythonExcelAutomation</strong>
-        <p>An application in Python to automate the Excel fomulas.</p>
-      </div>
-      <FiChevronRight size={20} />
-    </a>
-    <a href="Perfil">
-      <img src="https://avatars.githubusercontent.com/u/111578906?v=4" alt="Enzo Ofrante"/>
-      <div>
-        <strong>EnzoOfrante/Projeto-Ney</strong>
-        <p>A website made based on Neymar Junior.</p>
-      </div>
-      <FiChevronRight size={20} />
-    </a>
+      {repositories.map(repository => (
+            <a key={repository.full_name} href="Perfil">
+              <img src={repository.owner.avatar_url} alt={repository.owner.avatar_url}/>
+              <div>
+                <strong>{repository.full_name}</strong>
+                <p>{repository.description}</p>
+              </div>
+            <FiChevronRight size={20} />
+          </a>
+      ))}
     </Repositories>
     </>
   );
